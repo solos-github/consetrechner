@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GW Conset Calculator</title>
+  <style>
+    :root{
+      --bg:#f3f5f7; --panel:#fff; --border:#cfd6dd; --text:#1f2a33; --muted:#5b6b78; --accent:#2f7bdc;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    body{ margin:0; font-family:var(--sans); background:linear-gradient(#e9eef3,#e6ebf0); color:var(--text); }
+    .window{ max-width: 1080px; margin: 22px auto; border:1px solid #8aa0b6; border-radius:10px; overflow:hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,.15); background:#dbe6f2; }
+    .titlebar{ background: linear-gradient(#2c66a7,#1f4f86); color:#fff; padding:10px 14px; font-weight:800; }
+    .content{ padding:14px; background:var(--bg); }
+    .section{ background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:12px; }
+    .section h2{ margin:0 0 10px 0; font-size:14px; color:var(--accent); font-weight:900; }
+    .grid{ display:grid; grid-template-columns: 1.5fr 1fr; gap:12px; align-items:start; }
+    table{ width:100%; border-collapse:collapse; }
+    th, td{ border-bottom:1px solid #e6edf4; padding:8px 6px; font-size:13px; vertical-align:middle; }
+    th{ text-align:left; color:var(--muted); font-weight:900; font-size:12px; }
+    tr:last-child td{ border-bottom:none; }
+
+    /* Standard: kleine Inputs (z.B. Consets) */
+    input[type="number"]{
+      width:auto;
+      box-sizing:border-box;
+      padding:6px 8px;
+      border:1px solid var(--border);
+      border-radius:8px;
+      background:#fff;
+      font-size:13px;
+    }
+    /* In Tabellen sollen Inputs die Zelle füllen */
+    table input[type="number"]{ width:100%; }
+
+    .rowflex{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .controls{ flex-wrap:nowrap; }
+    .badge{ display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border:1px solid #dbe4ee; border-radius:999px;
+      background:#f7fafc; color:#22313d; font-size:12px; white-space:nowrap; }
+    .muted{ color:var(--muted); font-size:12px; }
+    .rightbox{ display:flex; flex-direction:column; gap:10px; }
+    .stat{ border:1px solid var(--border); border-radius:10px; padding:10px; background:#fbfdff; }
+    .stat h3{ margin:0 0 6px 0; font-size:12px; color:var(--muted); font-weight:950; text-transform:uppercase; letter-spacing:.4px; }
+    .stat .value{ font-size:18px; font-weight:950; font-family:var(--mono); }
+    .footer{ text-align:center; padding:8px 10px 2px; color:var(--muted); font-size:12px; }
+    .icon{ width:22px; height:22px; }
+    .itemcell{ display:flex; gap:8px; align-items:center; }
+    .small{ width:110px; }
+    @media (max-width: 900px){
+      .grid{ grid-template-columns: 1fr; }
+      .controls{ flex-wrap:wrap; }
+    }
+  </style>
+</head>
+<body>
+  <div class="window">
+    <div class="titlebar">Guild Wars – Conset Calculator</div>
+    <div class="content">
+
+      <div class="section">
+        <h2>Consumables</h2>
+        <div class="muted">
+          Hiermit lassen sich individuell Kosten für Consets berechnen.
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="width:240px;">Item</th>
+              <th style="width:90px;">Amount</th>
+              <th>Materials (pro Item)</th>
+              <th style="width:190px;">Herstellungskosten</th>
+              <th style="width:160px;">Skillpunkte</th>
+            </tr>
+          </thead>
+          <tbody id="consRows"></tbody>
+        </table>
+
+        <div class="rowflex controls" style="margin-top:10px;">
+          <span class="badge">Anzahl der zu berechnenden Consets</span>
+          <input type="number" id="consetCount" min="1" value="1" class="small" />
+        </div>
+
+        <div class="muted" style="margin-top:8px;">
+          Hinweis: Anzahl der Consets setzt automatisch Rüstung, Essenz und Gral auf die Anzahl von „Consets“.
+          Schriftrollen werden nur berücksichtigt, wenn du bei „Schriftrolle der Wiederbelebung“ einen Amount &gt; 0 einträgst.
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="section">
+          <h2>Materialkosten (Preise pro 10 Stück beim Kaufmann)</h2>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="width:240px;">Material</th>
+                <th style="width:160px;">Preis / 10 (Gold)</th>
+                <th style="width:160px;">Benötigte Menge</th>
+                <th>Total Price</th>
+              </tr>
+            </thead>
+            <tbody id="matRows"></tbody>
+          </table>
+
+          <div class="muted" style="margin-top:10px;">
+            Die aktuellen Preise müssen aus dem Spiel ausgelesen und eingetragen werden.
+          </div>
+        </div>
+
+        <div class="rightbox section">
+          <h2>Total</h2>
+
+          <div class="stat">
+            <h3>Materialkosten</h3>
+            <div class="value" id="materialTotal">0p 0g</div>
+          </div>
+
+          <div class="stat">
+            <h3>Herstellungskosten</h3>
+            <div class="value" id="craftingTotal">0p 0g</div>
+          </div>
+
+          <div class="stat">
+            <h3>Fertigkeitspunkte</h3>
+            <div class="value" id="skillpunktTotal">0 Fertigkeitspunkte</div>
+            <div class="muted">= Anzahl gecrafteter Items (inkl. Schriftrollen, wenn Amount &gt; 0).</div>
+          </div>
+
+          <div class="stat">
+            <h3>Gesamtkosten</h3>
+            <div class="value" id="grandTotal">0p 0g</div>
+          </div>
+
+          <div class="stat">
+            <h3>Preis pro Conset</h3>
+            <div class="value" id="perConset">0p 0g</div>
+            <div class="muted">Preis für 1 Conset (ohne Schriftrollen).</div>
+          </div>
+
+          <div class="stat">
+            <h3>Fertigkeitspunkte pro Conset</h3>
+            <div class="value" id="skillpunktPerConset">3 Fertigkeitspunkte</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">Icons: GuildWiki (hotlink) ~ Wolle 2026.</div>
+    </div>
+  </div>
+
+<script>
+  const GOLD_PER_PLATINUM = 1000;
+  const CRAFT_GOLD_PER_ITEM = 250;
+  const FERTIGKEITSPUNKTE_PER_ITEM = 1;
+
+  // Icons (GuildWiki)
+  const ICONS = {
+    aos: "https://www.guildwiki.de/gwiki/images/9/95/R%C3%BCstung_der_Erl%C3%B6sung_icon.png",
+    gom: "https://www.guildwiki.de/gwiki/images/b/bd/Gral_der_Macht_icon.png",
+    eoc: "https://www.guildwiki.de/gwiki/images/5/59/Essenz_der_Geschwindigkeit_icon.png",
+    res: "https://www.guildwiki.de/gwiki/images/e/ea/Schriftrolle_der_Wiederbelebung_icon.png",
+
+    bone: "https://www.guildwiki.de/gwiki/images/0/0b/Knochen_icon.png",
+    iron: "https://www.guildwiki.de/gwiki/images/f/fa/Eisenbarren_icon.png",
+    feather: "https://www.guildwiki.de/gwiki/images/2/27/Feder_icon.png",
+    glitter: "https://www.guildwiki.de/gwiki/images/9/95/Glitzerstaubhaufen_icon.png",
+    plant: "https://www.guildwiki.de/gwiki/images/5/56/Pflanzenfaser_icon.png",
+  };
+
+  // Rezepte pro Item
+  const ITEMS = [
+    { key:"aos", name:"Rüstung der Erlösung", icon: ICONS.aos, mats:[
+      { key:"bone", name:"Knochen", icon: ICONS.bone, qty:50 },
+      { key:"iron", name:"Eisenbarren", icon: ICONS.iron, qty:50 },
+    ]},
+    { key:"gom", name:"Gral der Macht", icon: ICONS.gom, mats:[
+      { key:"glitter", name:"Glitzerstaubhaufen", icon: ICONS.glitter, qty:50 },
+      { key:"iron", name:"Eisenbarren", icon: ICONS.iron, qty:50 },
+    ]},
+    { key:"eoc", name:"Essenz der Geschwindigkeit", icon: ICONS.eoc, mats:[
+      { key:"feather", name:"Feder", icon: ICONS.feather, qty:50 },
+      { key:"glitter", name:"Glitzerstaubhaufen", icon: ICONS.glitter, qty:50 },
+    ]},
+    { key:"res", name:"Schriftrolle der Wiederbelebung", icon: ICONS.res, mats:[
+      { key:"bone", name:"Knochen", icon: ICONS.bone, qty:25 },
+      { key:"plant", name:"Pflanzenfaser", icon: ICONS.plant, qty:25 },
+    ]},
+  ];
+
+  // Alle Materialien, die immer in der Materials-Tabelle erscheinen sollen:
+  const MATERIALS_MASTER = [
+    { key:"bone",    name:"Knochen",            icon: ICONS.bone },
+    { key:"iron",    name:"Eisenbarren",        icon: ICONS.iron },
+    { key:"glitter", name:"Glitzerstaubhaufen", icon: ICONS.glitter },
+    { key:"feather", name:"Feder",              icon: ICONS.feather },
+    { key:"plant",   name:"Pflanzenfaser",      icon: ICONS.plant },
+  ];
+
+  // Default Amounts
+  const amounts = { aos: 1, gom: 1, eoc: 1, res: 0 };
+
+  // Default Materialpreise /10 (Gold)
+  const matPricePer10 = { bone: 100, glitter: 150, feather: 450, iron: 200, plant: 150 };
+
+  function safeNum(v){ return Number.isFinite(+v) ? +v : 0; }
+
+  function goldToPg(gold){
+    const total = Math.round(gold);
+    const p = Math.floor(total / GOLD_PER_PLATINUM);
+    const g = total - p * GOLD_PER_PLATINUM;
+    return { p, g };
+  }
+  function fmtPg(pg){ return `${pg.p}p ${pg.g}g`; }
+
+  // Consets-Input steuert NUR AoS/GoM/EoC (nicht Res)
+  function applyConsetCountToAmounts(){
+    const c = Math.max(1, safeNum(document.getElementById("consetCount").value || 1));
+    amounts.aos = c;
+    amounts.gom = c;
+    amounts.eoc = c;
+    // amounts.res bleibt manuell
+  }
+
+  function countCraftedItems(){
+    // Alle Items zählen (inkl. Res), aber natürlich nur wenn Amount > 0
+    let n = 0;
+    for(const it of ITEMS){
+      n += safeNum(amounts[it.key] ?? 0);
+    }
+    return n;
+  }
+
+  function buildConsumableRows(){
+    const tbody = document.getElementById("consRows");
+    tbody.innerHTML = "";
+
+    for(const it of ITEMS){
+      const tr = document.createElement("tr");
+      const matsHtml = it.mats.map(m =>
+        `<span class="badge">
+          <img class="icon" src="${m.icon}" alt="${m.name}"> ${m.qty}× ${m.name}
+        </span>`
+      ).join(" ");
+
+      const amt = safeNum(amounts[it.key] ?? 0);
+      const craftGold = amt * CRAFT_GOLD_PER_ITEM;
+      const fertigkeitspunkte = amt * FERTIGKEITSPUNKTE_PER_ITEM;
+
+      tr.innerHTML = `
+        <td>
+          <div class="itemcell">
+            <img class="icon" src="${it.icon}" alt="${it.name}">
+            <b>${it.name}</b>
+          </div>
+        </td>
+        <td><input type="number" min="0" value="${amt}" data-amount="${it.key}"></td>
+        <td>${matsHtml}</td>
+        <td><span class="badge"><b>${fmtPg(goldToPg(craftGold))}</b> (250g/Item)</span></td>
+        <td><span class="badge"><b>${fertigkeitspunkte}</b> Fertigkeitspunkte</span></td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    // Manuelle Eingabe überschreibt amounts, ohne consetCount drüberzubügeln
+    tbody.querySelectorAll("input[data-amount]").forEach(inp => {
+      inp.addEventListener("input", () => {
+        amounts[inp.dataset.amount] = safeNum(inp.value);
+        recalc(false);
+      });
+    });
+  }
+
+  function aggregateMaterials(){
+    const agg = {};
+    for(const it of ITEMS){
+      const amt = safeNum(amounts[it.key] ?? 0);
+      for(const m of it.mats){
+        agg[m.key] = (agg[m.key] || 0) + amt * m.qty;
+      }
+    }
+    return agg;
+  }
+
+  function calcMaterialGoldFromAgg(agg){
+    let gold = 0;
+    for(const [k, qty] of Object.entries(agg)){
+      const p10 = safeNum(matPricePer10[k] ?? 0);
+      gold += (qty / 10) * p10;
+    }
+    return gold;
+  }
+
+  function buildMaterialRows(agg){
+    const tbody = document.getElementById("matRows");
+    tbody.innerHTML = "";
+
+    for(const mat of MATERIALS_MASTER){
+      const amount = safeNum(agg[mat.key] ?? 0);
+      const p10 = safeNum(matPricePer10[mat.key] ?? 0);
+      const totalGold = (amount / 10) * p10;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><span class="badge"><img class="icon" src="${mat.icon}" alt="${mat.name}">${mat.name}</span></td>
+        <td><input type="number" min="0" value="${p10}" data-price="${mat.key}"></td>
+        <td><span class="badge">${Math.round(amount)}</span></td>
+        <td><span class="badge"><b>${fmtPg(goldToPg(totalGold))}</b></span></td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    tbody.querySelectorAll("input[data-price]").forEach(inp => {
+      inp.addEventListener("input", () => {
+        matPricePer10[inp.dataset.price] = safeNum(inp.value);
+        recalc(false);
+      });
+    });
+  }
+
+  function calcHerstellungskostenGold(){
+    return countCraftedItems() * CRAFT_GOLD_PER_ITEM;
+  }
+
+  function calcPreisProConsetGold(){
+    // Preis für 1 Conset = AoS + GoM + EoC (ohne Res)
+    const keys = ["aos","gom","eoc"];
+    const agg = {};
+
+    for(const key of keys){
+      const it = ITEMS.find(x=>x.key===key);
+      if(!it) continue;
+      for(const m of it.mats){
+        agg[m.key] = (agg[m.key] || 0) + m.qty;
+      }
+    }
+
+    const matGold = calcMaterialGoldFromAgg(agg);
+    const craftGold = keys.length * CRAFT_GOLD_PER_ITEM;
+    return matGold + craftGold;
+  }
+
+  function calcFertigkeitspunkteProConset(){
+    // Conset besteht aus 3 Items
+    return 3 * FERTIGKEITSPUNKTE_PER_ITEM;
+  }
+
+  // recalc(applyConsets=true) -> überschreibt AoS/GoM/EoC aus consetCount, Res bleibt manuell
+  function recalc(applyConsets=true){
+    if(applyConsets) applyConsetCountToAmounts();
+
+    buildConsumableRows();
+
+    const agg = aggregateMaterials();
+    buildMaterialRows(agg);
+
+    const materialGold = calcMaterialGoldFromAgg(agg);
+    const herstellungGold = calcHerstellungskostenGold();
+    const gesamtGold = materialGold + herstellungGold;
+
+    document.getElementById("materialTotal").textContent = fmtPg(goldToPg(materialGold));
+    document.getElementById("craftingTotal").textContent = fmtPg(goldToPg(herstellungGold));
+    document.getElementById("grandTotal").textContent = fmtPg(goldToPg(gesamtGold));
+
+    const fertigkeitspunkte = countCraftedItems() * FERTIGKEITSPUNKTE_PER_ITEM;
+    document.getElementById("skillpunktTotal").textContent = `${fertigkeitspunkte} Fertigkeitspunkte`;
+
+    document.getElementById("perConset").textContent = fmtPg(goldToPg(calcPreisProConsetGold()));
+    document.getElementById("skillpunktPerConset").textContent = `${calcFertigkeitspunkteProConset()} Fertigkeitspunkte`;
+  }
+
+  document.getElementById("consetCount").addEventListener("input", () => recalc(true));
+
+  recalc(true);
+</script>
+</body>
+</html>
+```0
