@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>GW Conset Calculator</title>
+  <title>GW Conset Rechner</title>
   <style>
     :root{
       --bg:#f3f5f7; --panel:#fff; --border:#cfd6dd; --text:#1f2a33; --muted:#5b6b78; --accent:#2f7bdc;
@@ -38,13 +38,6 @@
 
     .rowflex{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
     .controls{ flex-wrap:nowrap; }
-
-/* Mobile: Controls dürfen umbrechen */
-@media (max-width: 900px){
-  .controls{ flex-wrap:wrap; }
-  .small{ width:100%; }            /* Consets-Feld wird dann volle Breite */
-  .badge{ white-space:normal; }    /* lange Badge-Texte dürfen umbrechen */
-}
     .badge{ display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border:1px solid #dbe4ee; border-radius:999px;
       background:#f7fafc; color:#22313d; font-size:12px; white-space:nowrap; }
     .muted{ color:var(--muted); font-size:12px; }
@@ -64,13 +57,14 @@
 </head>
 <body>
   <div class="window">
-    <div class="titlebar">Guild Wars – Conset Calculator</div>
+    <div class="titlebar">Guild Wars – Rechner</div>
     <div class="content">
 
       <div class="section">
-        <h2>Consumables</h2>
+        <h2>Selektion</h2>
         <div class="muted">
-          Hiermit lassen sich individuell Kosten für Consets berechnen.
+          Hiermit lassen sich individuell Kosten für Consets berechnen. Das Tool geht davon aus, dass man beim Materialienhändler das Material holt. Es müssen für Knochen, Eisenbarren, Federn, Glitzerstaubhaufen und Pflanzenfasern die aktuellen Werte vom Materialhändler händisch eingetragen werden.
+		  Achtung die Preise beim Materialhändler ändern sich laufend, daher ist das Tool nur als grobes Werkzeug nutzbar.
         </div>
 
         <table>
@@ -92,22 +86,21 @@
         </div>
 
         <div class="muted" style="margin-top:8px;">
-          Hinweis: Anzahl der Consets setzt automatisch Rüstung, Essenz und Gral auf die Anzahl von „Consets“.
-          Schriftrollen werden nur berücksichtigt, wenn du bei „Schriftrolle der Wiederbelebung“ einen Amount &gt; 0 einträgst.
+          *Hinweis: setzt automatisch Rüstung, Essenz und Gral auf die Anzahl von „Consets“.
         </div>
       </div>
 
       <div class="grid">
         <div class="section">
-          <h2>Materialkosten (Preise pro 10 Stück beim Kaufmann)</h2>
+          <h2>Materialkosten(beim Materialhändler)</h2>
 
           <table>
             <thead>
               <tr>
                 <th style="width:240px;">Material</th>
-                <th style="width:160px;">Preis / 10 (Gold)</th>
+                <th style="width:160px;">Aktueller Goldpreis pro 10 Stück(bitte eintragen)</th>
                 <th style="width:160px;">Benötigte Menge</th>
-                <th>Total Price</th>
+                <th>Berechneter Preis</th>
               </tr>
             </thead>
             <tbody id="matRows"></tbody>
@@ -119,7 +112,7 @@
         </div>
 
         <div class="rightbox section">
-          <h2>Total</h2>
+          <h2>Kostenübersicht</h2>
 
           <div class="stat">
             <h3>Materialkosten</h3>
@@ -134,7 +127,12 @@
           <div class="stat">
             <h3>Fertigkeitspunkte</h3>
             <div class="value" id="skillpunktTotal">0 Fertigkeitspunkte</div>
-            <div class="muted">= Anzahl gecrafteter Items (inkl. Schriftrollen, wenn Amount &gt; 0).</div>
+          </div>
+		  
+		  <div class="stat">
+            <h3>Aktueller Preis pro Conset(</h3>
+            <div class="value" id="perConset">0p 0g</div>
+            <div class="muted">automatisch anhand der Materialkosten errechnet</div>
           </div>
 
           <div class="stat">
@@ -142,21 +140,12 @@
             <div class="value" id="grandTotal">0p 0g</div>
           </div>
 
-          <div class="stat">
-            <h3>Preis pro Conset</h3>
-            <div class="value" id="perConset">0p 0g</div>
-            <div class="muted">Preis für 1 Conset (ohne Schriftrollen).</div>
-          </div>
 
-          <div class="stat">
-            <h3>Fertigkeitspunkte pro Conset</h3>
-            <div class="value" id="skillpunktPerConset">3 Fertigkeitspunkte</div>
-          </div>
-        </div>
-      </div>
 
-      <div class="footer">Icons: GuildWiki (hotlink) ~ Wolle 2026.</div>
+
+      
     </div>
+	<div class="footer">Icons: GuildWiki (hotlink) ~ Wolle 2026.</div>
   </div>
 
 <script>
@@ -211,7 +200,7 @@
   const amounts = { aos: 1, gom: 1, eoc: 1, res: 0 };
 
   // Default Materialpreise /10 (Gold)
-  const matPricePer10 = { bone: 100, glitter: 150, feather: 450, iron: 200, plant: 150 };
+  const matPricePer10 = { bone: 140, glitter: 390, feather: 140, iron: 170, plant: 300 };
 
   function safeNum(v){ return Number.isFinite(+v) ? +v : 0; }
 
@@ -385,4 +374,3 @@
 </script>
 </body>
 </html>
-```0
