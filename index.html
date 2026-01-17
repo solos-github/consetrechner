@@ -38,6 +38,13 @@
 
     .rowflex{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
     .controls{ flex-wrap:nowrap; }
+
+/* Mobile: Controls dürfen umbrechen */
+@media (max-width: 900px){
+  .controls{ flex-wrap:wrap; }
+  .small{ width:100%; }            /* Consets-Feld wird dann volle Breite */
+  .badge{ white-space:normal; }    /* lange Badge-Texte dürfen umbrechen */
+}
     .badge{ display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border:1px solid #dbe4ee; border-radius:999px;
       background:#f7fafc; color:#22313d; font-size:12px; white-space:nowrap; }
     .muted{ color:var(--muted); font-size:12px; }
