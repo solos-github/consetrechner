@@ -11,13 +11,32 @@
       --sans: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
     body{ margin:0; font-family:var(--sans); background:linear-gradient(#e9eef3,#e6ebf0); color:var(--text); }
-    .window{ max-width: 1080px; margin: 22px auto; border:1px solid #8aa0b6; border-radius:10px; overflow:hidden;
-      box-shadow: 0 8px 24px rgba(0,0,0,.15); background:#dbe6f2; }
+
+    /* WICHTIG: overflow hidden schneidet breite Tabellen ab */
+    .window{
+      max-width: 1080px;
+      margin: 22px auto;
+      border:1px solid #8aa0b6;
+      border-radius:10px;
+      overflow: visible; /* <- war hidden */
+      box-shadow: 0 8px 24px rgba(0,0,0,.15);
+      background:#dbe6f2;
+    }
+
     .titlebar{ background: linear-gradient(#2c66a7,#1f4f86); color:#fff; padding:10px 14px; font-weight:800; }
     .content{ padding:14px; background:var(--bg); }
     .section{ background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:12px; }
     .section h2{ margin:0 0 10px 0; font-size:14px; color:var(--accent); font-weight:900; }
     .grid{ display:grid; grid-template-columns: 1.5fr 1fr; gap:12px; align-items:start; }
+
+    /* Tabellen-Wrapper für kleine Screens */
+    .tablewrap{
+      width:100%;
+      overflow-x:auto;
+      -webkit-overflow-scrolling:touch;
+      border-radius:10px;
+    }
+
     table{ width:100%; border-collapse:collapse; }
     th, td{ border-bottom:1px solid #e6edf4; padding:8px 6px; font-size:13px; vertical-align:middle; }
     th{ text-align:left; color:var(--muted); font-weight:900; font-size:12px; }
@@ -49,9 +68,11 @@
     .icon{ width:22px; height:22px; }
     .itemcell{ display:flex; gap:8px; align-items:center; }
     .small{ width:110px; }
+
     @media (max-width: 900px){
       .grid{ grid-template-columns: 1fr; }
       .controls{ flex-wrap:wrap; }
+      .badge{ white-space:normal; }
     }
   </style>
 </head>
@@ -63,22 +84,26 @@
       <div class="section">
         <h2>Selektion</h2>
         <div class="muted">
-          Hiermit lassen sich individuell Kosten für Consets berechnen. Das Tool geht davon aus, dass man beim Materialienhändler das Material holt. Es müssen für Knochen, Eisenbarren, Federn, Glitzerstaubhaufen und Pflanzenfasern die aktuellen Werte vom Materialhändler händisch eingetragen werden.
-		  Achtung die Preise beim Materialhändler ändern sich laufend, daher ist das Tool nur als grobes Werkzeug nutzbar.
+          Hiermit lassen sich individuell Kosten für Consets berechnen. Das Tool geht davon aus, dass man beim Materialienhändler das Material holt.
+          Es müssen für Knochen, Eisenbarren, Federn, Glitzerstaubhaufen und Pflanzenfasern die aktuellen Werte vom Materialhändler händisch eingetragen werden.
+          Achtung die Preise beim Materialhändler ändern sich laufend, daher ist das Tool nur als grobes Werkzeug nutzbar.
         </div>
 
-        <table>
-          <thead>
-            <tr>
-              <th style="width:240px;">Item</th>
-              <th style="width:90px;">Amount</th>
-              <th>Materials (pro Item)</th>
-              <th style="width:190px;">Herstellungskosten</th>
-              <th style="width:160px;">Skillpunkte</th>
-            </tr>
-          </thead>
-          <tbody id="consRows"></tbody>
-        </table>
+        <!-- Wrapper verhindert "halb angezeigt" -->
+        <div class="tablewrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:240px;">Item</th>
+                <th style="width:90px;">Amount</th>
+                <th>Materials (pro Item)</th>
+                <th style="width:190px;">Herstellungskosten</th>
+                <th style="width:160px;">Skillpunkte</th>
+              </tr>
+            </thead>
+            <tbody id="consRows"></tbody>
+          </table>
+        </div>
 
         <div class="rowflex controls" style="margin-top:10px;">
           <span class="badge">Anzahl der zu berechnenden Consets</span>
@@ -94,17 +119,19 @@
         <div class="section">
           <h2>Materialkosten(beim Materialhändler)</h2>
 
-          <table>
-            <thead>
-              <tr>
-                <th style="width:240px;">Material</th>
-                <th style="width:160px;">Aktueller Goldpreis pro 10 Stück(bitte eintragen)</th>
-                <th style="width:160px;">Benötigte Menge</th>
-                <th>Berechneter Preis</th>
-              </tr>
-            </thead>
-            <tbody id="matRows"></tbody>
-          </table>
+          <div class="tablewrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:240px;">Material</th>
+                  <th style="width:160px;">Aktueller Goldpreis pro 10 Stück(bitte eintragen)</th>
+                  <th style="width:160px;">Benötigte Menge</th>
+                  <th>Berechneter Preis</th>
+                </tr>
+              </thead>
+              <tbody id="matRows"></tbody>
+            </table>
+          </div>
 
           <div class="muted" style="margin-top:10px;">
             Die aktuellen Preise müssen aus dem Spiel ausgelesen und eingetragen werden.
@@ -128,9 +155,9 @@
             <h3>Fertigkeitspunkte</h3>
             <div class="value" id="skillpunktTotal">0 Fertigkeitspunkte</div>
           </div>
-		  
-		  <div class="stat">
-            <h3>Aktueller Preis pro Conset(</h3>
+
+          <div class="stat">
+            <h3>Aktueller Preis pro Conset</h3>
             <div class="value" id="perConset">0p 0g</div>
             <div class="muted">automatisch anhand der Materialkosten errechnet</div>
           </div>
@@ -140,12 +167,11 @@
             <div class="value" id="grandTotal">0p 0g</div>
           </div>
 
+        </div>
+      </div>
 
-
-
-      
+      <div class="footer">Icons: GuildWiki (hotlink) ~ Wolle 2026.</div>
     </div>
-	<div class="footer">Icons: GuildWiki (hotlink) ~ Wolle 2026.</div>
   </div>
 
 <script>
@@ -187,7 +213,6 @@
     ]},
   ];
 
-  // Alle Materialien, die immer in der Materials-Tabelle erscheinen sollen:
   const MATERIALS_MASTER = [
     { key:"bone",    name:"Knochen",            icon: ICONS.bone },
     { key:"iron",    name:"Eisenbarren",        icon: ICONS.iron },
@@ -196,10 +221,7 @@
     { key:"plant",   name:"Pflanzenfaser",      icon: ICONS.plant },
   ];
 
-  // Default Amounts
   const amounts = { aos: 1, gom: 1, eoc: 1, res: 0 };
-
-  // Default Materialpreise /10 (Gold)
   const matPricePer10 = { bone: 140, glitter: 390, feather: 140, iron: 170, plant: 300 };
 
   function safeNum(v){ return Number.isFinite(+v) ? +v : 0; }
@@ -218,11 +240,9 @@
     amounts.aos = c;
     amounts.gom = c;
     amounts.eoc = c;
-    // amounts.res bleibt manuell
   }
 
   function countCraftedItems(){
-    // Alle Items zählen (inkl. Res), aber natürlich nur wenn Amount > 0
     let n = 0;
     for(const it of ITEMS){
       n += safeNum(amounts[it.key] ?? 0);
@@ -261,7 +281,6 @@
       tbody.appendChild(tr);
     }
 
-    // Manuelle Eingabe überschreibt amounts, ohne consetCount drüberzubügeln
     tbody.querySelectorAll("input[data-amount]").forEach(inp => {
       inp.addEventListener("input", () => {
         amounts[inp.dataset.amount] = safeNum(inp.value);
@@ -322,7 +341,6 @@
   }
 
   function calcPreisProConsetGold(){
-    // Preis für 1 Conset = AoS + GoM + EoC (ohne Res)
     const keys = ["aos","gom","eoc"];
     const agg = {};
 
@@ -339,12 +357,6 @@
     return matGold + craftGold;
   }
 
-  function calcFertigkeitspunkteProConset(){
-    // Conset besteht aus 3 Items
-    return 3 * FERTIGKEITSPUNKTE_PER_ITEM;
-  }
-
-  // recalc(applyConsets=true) -> überschreibt AoS/GoM/EoC aus consetCount, Res bleibt manuell
   function recalc(applyConsets=true){
     if(applyConsets) applyConsetCountToAmounts();
 
@@ -365,11 +377,9 @@
     document.getElementById("skillpunktTotal").textContent = `${fertigkeitspunkte} Fertigkeitspunkte`;
 
     document.getElementById("perConset").textContent = fmtPg(goldToPg(calcPreisProConsetGold()));
-    document.getElementById("skillpunktPerConset").textContent = `${calcFertigkeitspunkteProConset()} Fertigkeitspunkte`;
   }
 
   document.getElementById("consetCount").addEventListener("input", () => recalc(true));
-
   recalc(true);
 </script>
 </body>
